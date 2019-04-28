@@ -30,6 +30,7 @@ final class CryptorECCTests: XCTestCase {
             ("test_new512KeyToPEM", test_new512KeyToPEM),
             ("test_sec1PemString", test_sec1PemString),
             ("test_P8PemString", test_P8PemString),
+            ("test_ecdh", test_ecdh),
         ]
     
     let ecPemPrivateKey = """
@@ -122,6 +123,36 @@ ktdB+x1/lodGyMLzGV/uxtsjhwFbX0t7mzDLAm0USboXyclnQ65y8C1UEVOBK30W
 Mw==
 -----END PRIVATE KEY-----
 """
+    let ecdhPemPrivateKey = """
+-----BEGIN EC PRIVATE KEY-----
+MIHcAgEBBEIBvROMDXNFafzbzEuGX1rVFpDUybzfOsxMnoq9mw468QJOYjF52ktz
+jm49M6xLKQ3rrXpF7Di32r5MYqfmDL84uNqgBwYFK4EEACOhgYkDgYYABAHwZEq9
+FHkNipjUDTCzx7eePrCL2Lwh09nCe8JMFwGQHCxSyBbJyNydH5fZRDrd6U1H+ofM
+/EHUWiXAgBCt6CNWTgAqSU/iebeDyiJipoHW6C+zWPnoS9I2b4HgxMzS4sNIQzx/
+u0pFO1UQOqrwhG2ePFHhGAcXJ+Cx4GSpFKUxU4TP2w==
+-----END EC PRIVATE KEY-----
+"""
+    let ecdhPemPeerPublicKey = """
+-----BEGIN PUBLIC KEY-----
+MIGbMBAGByqGSM49AgEGBSuBBAAjA4GGAAQAG/FpQnPZdQ0o/uJ2wv2Z26H1IhMj
+qAUqTp+ZvseG9N4gu7u6tKXPN+wiQmoJbT8qduG08UgdEfrW+k3qZxF5CHYB1C3/
+Wjtu9JG8WiqeIxWLwMUyY6pcJ98l6Ol390EFMZm5g8xqCp6O8y0r63VR43sqtII+
+mYXiGiElBgALEHx7Zeo=
+-----END PUBLIC KEY-----
+"""
+    func test_ecdh() {
+        do {
+            let ecdhPrivateKey = try ECPrivateKey(key: ecdhPemPrivateKey)
+            let peerKey = try ECPublicKey(key: ecdhPemPeerPublicKey)
+            let dh = ECDHKeyExchange(key: ecdhPrivateKey)
+            dh.hashEngine = ECHashEngine.sha512;
+            let key = dh.deriveKey(peerKey: peerKey);
+            let golden = Data(base64Encoded: "nemGZT6a6V78GZgLZMaUlpYnFrIpuQz/Jw6JVCIikcosJCxLOJS9/hJ7cA+WxUiFBTBy05xJ9keRkyIFZXbCwQ==");
+            XCTAssertEqual(key, golden);
+        } catch {
+            return XCTFail("test_ecdh failed: \(error)")
+        }
+    }
     
     func test_simpleCycle() { 
         do {
